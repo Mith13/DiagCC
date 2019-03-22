@@ -1,0 +1,531 @@
+
+/*#include "hugenholtz.h"
+
+using VertexPool_sPtr = std::shared_ptr<VertexPool>;
+using Hugenholtz_uPtr = std::unique_ptr<HugenholtzDiagram>;
+using Diagram_uPtr = std::unique_ptr<Diagram>;
+//class Edge 
+Edge::Edge(int L, int R)
+{
+	this->L = L;
+	this->R = R;
+	this->line = N_;
+}
+
+Edge::Edge(const Edge & rhs)
+{
+	this->L = rhs.L;
+	this->R = rhs.R;
+	this->line = rhs.line;
+}
+
+bool Edge::operator<(const Edge & rhs) const
+{
+	int line_tmp=static_cast<int>line;
+	int rhs_line_tmp=static_cast<int>rhs.line;	
+	if (L < rhs.L)
+		return true;
+	else if (L == rhs.L && R < rhs.R)
+		return true;
+	else if (L == rhs.L && R == rhs.R && line_tmp < rhs_line_tmp)
+		return true;
+	else 
+		return false;
+}
+
+bool Edge::operator==(const Edge & rhs) const
+{
+	return (L == rhs.L && R == rhs.R && line==rhs.line);
+}
+
+Edge::~Edge()
+{
+}
+//class Vertex
+Vertex::Vertex(const Vertex & rhs)
+{
+	this->up = rhs.up;
+	this->down = rhs.down;
+	this->t_pos = rhs.t_pos;
+}
+
+void Vertex::setup(int up, int down, int t_pos)
+{
+	this->up = up;
+	this->down = down;
+	this->t_pos = t_pos;
+}
+
+void Vertex::contractUp()
+{
+	up--;
+}
+
+void Vertex::decontractUp()
+{
+	up++;
+}
+void Vertex::contractDown()
+{
+	down--;
+}
+
+void Vertex::decontractDown()
+{
+	down++;
+}
+
+int Vertex::getTimePosition()
+{
+	return t_pos;
+}
+
+int Vertex::getUpLines()
+{
+	return up;
+}
+
+int Vertex::getDownLines()
+{
+	return down;
+}
+
+Vertex::~Vertex(){
+
+}
+
+//class VertexPool
+VertexPool::VertexPool():original()
+{
+	pool_tmp.reserve(2);
+}
+VertexPool::VertexPool(const VertexPool& pool):original(pool.original)
+{
+	reset();
+}
+VertexPool& VertexPool::operator=(const VertexPool& pool)
+{
+	this->original=pool.original;
+	this->pool_tmp=pool.pool_tmp;
+	return *this;
+}
+void VertexPool::addVertex(Vertex v)
+{
+	original.push_back(v);
+	pool_tmp.push_back(v);
+}
+void VertexPool::reset()
+{
+	pool_tmp = original;
+}
+int VertexPool::allConnected()
+{
+	double sum = 0;
+	for (auto& v : pool_tmp)
+	{
+		sum += v.getUpLines() + v.getDownLines();
+	}
+	return sum;
+	return 0;
+}
+
+VertexPool::~VertexPool()
+{
+	original.clear();
+	pool_tmp.clear();
+}
+
+//class Node
+Node::Node()
+{
+	parent = NULL;
+}
+
+Node::Node(Node * parent)
+{
+	this->parent = parent;
+}
+
+Node::Node(Node * parent, Edge edge_in)
+{
+	this->parent = parent;
+	data = edge_in;
+}
+
+void Node::branch(Node * next)
+{
+	child.push_back(next);
+}
+std::string Node::print()
+{
+	std::string tmp = "(" + std::to_string(data.getFirst()+1) + "," + std::to_string(data.getSecond()+1) + ")";
+	return tmp;
+}
+Edge Node::getEdge()
+{
+	return data;
+}
+
+Node::~Node()
+{	
+
+	std::cout << "Deleting Node" << std::endl;
+	this->parent = NULL;
+	if (child.size() == 0) return;
+	for (Node* next : child) {
+		next->~Node();
+	}
+}
+//class Tree
+Tree::Tree(VertexPool_sPtr& pool):pool(pool)
+{
+	//this->pool=pool;
+	this->root = new Node();
+	edge_stack.reserve(2);
+	makeTree(root,0);	
+	printTree(root,false,"");
+	pool->reset();
+    int sum=pool->allConnected()/2;
+	reduceTree(root,edge_stack,sum);	
+	std::cout << "Printing diagram" << std::endl;
+	for (auto& x : diagrams)
+	{
+		x->printSimple();
+	}
+}
+
+Tree::Tree(Node * root, VertexPool_sPtr& pool):pool(pool)
+{
+	//this->pool=pool;
+	this->root = root;
+	edge_stack.reserve(2);
+	makeTree(root,0);
+	printTree(root,false,"");
+	reduceTree(root,edge_stack,pool->allConnected()/2);
+	std::cout << "Printing diagram" << std::endl;
+	for (auto& x : diagrams) 
+	{
+		x->printDiagram();
+	}
+}
+
+void Tree::makeTree(Node* parent, int d)
+{
+	int sum = pool->allConnected();
+
+	if (sum == 0)
+	{
+		return;
+	}
+	for (int u = d + 1; u < pool->countVertices(); u++)
+	{
+		if (pool->getVertex(d).getUpLines() == 0 && d < pool->countVertices() - 2)
+		{
+			d++;
+			u = d + 1;
+		}
+		if (pool->getVertex(u).getDownLines() > 0 && pool->getVertex(u).getTimePosition() != pool->getVertex(d).getTimePosition())
+		{
+			//if (pool[d].top_h == 0 && d<pool.size()-2) {
+			//	d++;
+			//	u=d+1;
+			//}
+			//Edge data(pool.work_tmp[d].getTimePosition(),pool.work_tmp[u].getTimePosition());
+			Edge data(d,u);
+			pool->getVertex(d).contractUp();
+			pool->getVertex(u).contractDown();
+			Node *child = new Node(parent, data);
+			parent->branch(child);
+			makeTree(child, d);
+			pool->getVertex(d).decontractUp();
+			pool->getVertex(u).decontractDown();
+		}
+	}
+	return;
+}
+
+void Tree::reduceTree(Node* parent, std::vector<Edge>& stack, size_t  edge_count)
+{
+	if (parent->child.size() == 0)
+	{
+		//printf("End of branch\n");
+		if (stack.size() == edge_count)
+		{
+			std::unique_ptr<Diagram> tmp = std::make_unique<Diagram>(pool,stack);
+			std::sort(stack.begin(),stack.end());
+			//tmp.Print();
+			if (diagrams.size() > 0)
+			{
+				bool same = false;
+				for (size_t i = 0; i < diagrams.size(); i++)
+				{
+					if ((diagrams[i]->isEqual(stack)))
+						same = true;
+				}
+				if (!same)
+				{
+					//diagrams.push_back(std::make_unique<Diagram>(pool,stack));
+					diagrams.push_back(std::move(tmp));
+				}
+			}
+			else
+			{
+				//diagrams.push_back(std::make_unique<Diagram>(pool,stack));
+				diagrams.push_back(std::move(tmp));
+			}
+		}
+		//stack.pop_back();
+		return;
+	}
+	for (size_t i = 0; i < parent->child.size(); i++)
+	{
+		Node *next = parent->child[i];
+		//std::cout << "next_node ";
+		//next->GetData().Print();
+		Edge tmp = next->getEdge();
+		stack.push_back(tmp);
+		reduceTree(next, stack, edge_count);
+		stack.pop_back();
+	}
+	return;
+}
+
+void Tree::printTree(Node *parent, bool last, std::string indent)
+{
+	std::cout << indent + "+-" + parent->print() << std::endl;
+	indent += last ? "  " : "| ";
+	if (parent->child.size() == 0)
+	{
+		return;
+	}
+	for (int i = 0; i < static_cast<int>parent->child.size(); i++)
+	{
+		Node *next = parent->child[i];
+		printTree(next, i == (static_cast<int>parent->child.size() - 1), indent);
+	}
+}
+
+Tree::~Tree(){
+	std::cout << "Deleting Tree" << std::endl;
+	root->~Node();
+
+}
+
+//class Diagram
+Diagram::Diagram(const VertexPool_sPtr& pool,const std::vector<Edge>& edges):vertices(pool)
+{
+	std::cout << "Creating Diagram\n";
+	for (Edge e : edges)
+	{
+		this->edges.push_back(e);
+	}
+	std::sort(this->edges.begin(),this->edges.end());
+//	this->edges=edges;
+}
+Diagram::Diagram(const Diagram& diagram):vertices(diagram.vertices)
+{
+	std::cout << "Copying diagram\n";
+	this->edges=diagram.edges;
+}
+
+const int Diagram::countEdges()const 
+{
+	return edges.size();
+}
+
+void Diagram::printDiagram()
+{
+	int num_lines = 0;
+
+	for (int i = 0; i < vertices->countVertices();i++) 
+	{
+		for(Edge e : edges)
+		{			
+			if(e.getFirst()==i){
+				num_lines++;
+			}
+		}
+		std::cout<<"=";
+		if(vertices->getVertex(i+1).getTimePosition()> vertices->getVertex(i).getTimePosition()){
+			std::cout<<std::endl;
+			for (int j=0;j<num_lines;j++){
+				std::cout<<"|";
+			}
+			std::cout<<std::endl;
+			num_lines = 0;
+		}
+	}
+}
+
+void Diagram::printSimple()
+{
+	std::cout << "Printing diagram\n";
+	for (Edge& e : edges)
+	{
+		std::cout << "(" << e.getFirst() << "," << e.getSecond() << ")";
+        if(e.getLineType()!=N_) std::cout<<" : "<<e.getLineType();
+        std::cout<<std::endl;
+	}
+	//printDiagram();
+	//std::cout << std::endl;
+}
+
+bool Diagram::isEqual(const Diagram& rhs)const
+{
+		if (countEdges() != rhs.countEdges())
+			return false;
+		for (size_t i = 0; i < edges.size(); i++)
+		{
+			if (!(edges[i] == rhs.edges[i]))
+			{
+				return false;
+			}
+		}
+		return true;
+}
+bool Diagram::isEqual(const Diagram_uPtr& rhs)const
+{
+	if (countEdges() != rhs->countEdges())
+		return false;
+	for (size_t i = 0; i < edges.size(); i++)
+	{
+		if (!(edges[i] == rhs->edges[i]))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+bool Diagram::isEqual(const std::vector<Edge>& tmp)const
+{
+	if (countEdges() != tmp.size())
+		return false;
+	for (size_t i = 0; i < edges.size(); i++)
+	{
+		if (!(edges[i] == tmp[i]))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+std::vector<Diagram_uPtr> Diagram::createHugenholtzDiagrams()
+{
+	std::vector<Edge> tmp_vec;
+	std::vector<Diagram_uPtr> final_diagrams;
+	enumerateEdges(edges,tmp_vec,final_diagrams,0,0); 
+	std::cout<<"Enumerated diagrams"<<std::endl;
+	return final_diagrams;
+}
+void Diagram::enumerateEdges(std::vector<Edge>& edges, std::vector<Edge>& tmp,std::vector<Diagram_uPtr> &diagram_vec, size_t numOfHoles, size_t numOfPart)
+{
+	size_t size = tmp.size();
+	if(size==edges.size())
+	{
+		std::sort(tmp.begin(),tmp.end());
+		bool correct_diagram=true;
+		for (auto it = vertices->begin(); it < vertices->end();it++)
+		{	
+			int sum=0;		
+			for (auto v: tmp)
+			{
+				if(v.getFirst()==(it-vertices->begin()))
+				{
+					int line=static_cast<int>v.getLineType();
+					sum+=line;
+				}
+				if(v.getSecond()==(it-vertices->begin()))
+				{
+					int line=static_cast<int>v.getLineType();
+					sum-=line;
+				}
+			}
+			if(sum!=0)correct_diagram=false;	
+		}
+		for(auto& diag_tmp : diagram_vec){
+			if(diag_tmp->isEqual(tmp))correct_diagram=false;	
+		}
+        //if(numOfHoles==num)
+		//Diagram_uPtr tmp_diag =;
+		if(correct_diagram)diagram_vec.push_back(std::make_unique<HugenholtzDiagram>(vertices, tmp));
+		return;
+	}    
+    {
+        Edge edge_tmp(edges[size]);
+        edge_tmp.assignLineType(H_);
+        tmp.push_back(edge_tmp);
+        enumerateEdges(edges,tmp,diagram_vec,numOfHoles+1,numOfPart);
+        tmp.pop_back();
+    }    
+    {
+        Edge edge_tmp(edges[size]);
+        edge_tmp.assignLineType(P_);
+        tmp.push_back(edge_tmp);
+        enumerateEdges(edges,tmp,diagram_vec,numOfHoles,numOfPart+1);
+        tmp.pop_back();
+    }
+}
+Diagram::~Diagram()
+{
+	this->edges.clear();
+	std::cout << "Deleting Diagram"<<std::endl;
+}
+HugenholtzDiagram::HugenholtzDiagram(const VertexPool_sPtr& vertices, const std::vector<Edge>& edges) :Diagram(vertices, edges)
+{
+	
+	std::sort(this->edges.begin(),this->edges.end());
+	std::cout << "Creating Hugenholtz\n";
+}
+
+HugenholtzDiagram::HugenholtzDiagram(const HugenholtzDiagram & rhs) : Diagram(rhs.vertices, rhs.edges)
+{
+	std::cout << "Copying Hugenholtz\n";
+}
+
+HugenholtzDiagram::HugenholtzDiagram(const Diagram & rhs) : Diagram(rhs)
+{
+	std::cout << "Copying Diagram into Hugenholtz\n";
+}
+
+//class Operator
+void Operator::setup(int erank, int t_pos, char c)
+{
+	this->t_pos = t_pos;
+	this->name = c;
+	switch (name)
+	{
+	case 'T':
+		if (erank > 0) {
+			std::cout << "Creating an excitation operator " << this->name << erank << std::endl;
+			while (erank > 0) {
+				up = erank * 2;
+			}
+		}
+		else if (erank < 0) {
+			name = 'L';
+			std::cout << "Creating a deexcitation operator " << this->name << -erank << std::endl;
+			while (erank < 0) {
+				down = erank * 2;
+			}
+		}
+		else {
+			std::cout << "Wrong excitation rank for operator T or L" << std::endl;
+		}
+		break;
+	case 'V':
+		if (erank >= 0) {
+			up = erank;
+			down = 4 - erank;
+		}
+		else {
+			aux::abortMessage("Wrong type of two electron operator");
+		}
+		break;
+	case 'F':
+		break;
+	default:
+		aux::abortMessage("Uknown operator type");
+	}
+}
+*/
+

@@ -278,7 +278,7 @@ void Tree::makeTree(Node* parent, int d)
     }
     return;
 }
- 
+// Reduce diagram tree to non isomorphic diagrams
 void Tree::reduceTree(Node* parent, std::vector<Edge>& edges, size_t  edge_count)
 {
     if (parent->child.size() == 0)
