@@ -1,7 +1,6 @@
 #include "auxiliary.h"
 
 #include <map>
-#include <algorithm>
 #include <iterator>
 #include <string>
 
@@ -62,14 +61,14 @@ void printSet2(vector<int> set, std::string s = "")
 	std::cout << std::endl;
 }
 // Copy ctor 
-graphs::Graph::Graph(const Graph & g)
+graphs::PrimitiveGraph::PrimitiveGraph(const PrimitiveGraph & g)
 {
 	m_adjacency_matrix = g.m_adjacency_matrix;
 	m_adjacent_list = g.m_adjacent_list;
 	m_canonical_label = g.m_canonical_label;
 }
 // Move ctor
-graphs::Graph::Graph(const Graph && g)
+graphs::PrimitiveGraph::PrimitiveGraph(const PrimitiveGraph && g)
 {
 	m_adjacency_matrix = std::move(g.m_adjacency_matrix);
 	m_adjacent_list = std::move(g.m_adjacent_list);
@@ -78,7 +77,7 @@ graphs::Graph::Graph(const Graph && g)
 
 // Inserts an edge into the graph
 // Canonical label is always cleared after a new edge is added
-void graphs::Graph::insertEdge(int a1, int a2)
+void graphs::PrimitiveGraph::insertEdge(int a1, int a2)
 {
 	//If any vertex is outside for boundaries, abort
 	if (a1 > getVertices() || a2 > getVertices() || a1 < 0 || a2 < 0) {
@@ -98,7 +97,7 @@ void graphs::Graph::insertEdge(int a1, int a2)
 // Compares a graph with another
 // Returns true if two graphs are isomorphic,
 // otherwise false
-bool graphs::Graph::isIsomoprhic(Graph& rhs) {
+bool graphs::PrimitiveGraph::isIsomoprhic(PrimitiveGraph& rhs) {
 	createCanonicalLabel();
 	rhs.createCanonicalLabel();
 	for (int i = 0; i < getVertices(); i++) {
@@ -114,7 +113,7 @@ bool graphs::Graph::isIsomoprhic(Graph& rhs) {
 
 // Creates canonical label according to McKay alghorithm
 // see. Practical Graph Isomorphishm II. https://arxiv.org/abs/1301.1493
-void graphs::Graph::createCanonicalLabel()
+void graphs::PrimitiveGraph::createCanonicalLabel()
 {
 	//If canonical label is created skip the creation of new one
 	if (m_canonical_label.empty()) {
@@ -132,7 +131,7 @@ void graphs::Graph::createCanonicalLabel()
 }
 
 // Compares permuted elements of the adjacency matrix and returns the difference between the two
-int graphs::Graph::lower_permutation(const vector<int>& perm1, const vector<int>& perm2)const
+int graphs::PrimitiveGraph::lower_permutation(const vector<int>& perm1, const vector<int>& perm2)const
 {
 	for (int i = 0; i < getVertices(); i++) {
 		for (int j = 0; j <= i; j++) {
@@ -145,7 +144,7 @@ int graphs::Graph::lower_permutation(const vector<int>& perm1, const vector<int>
 }
 
 // Returns an initial equitable splitting of graph vertices
-partition graphs::Graph::equipartition() const
+partition graphs::PrimitiveGraph::equipartition() const
 {
 	// In this case final and working partition are the same
 	set<int> all_nodes;
@@ -160,7 +159,7 @@ partition graphs::Graph::equipartition() const
 }
 
 // Returns all possible isomorphic permutations or vertices
-vector<vector<int>> graphs::Graph::findIsomorphisms() const
+vector<vector<int>> graphs::PrimitiveGraph::findIsomorphisms() const
 {
 
 	vector<vector<int>> permutations; // container for all permutations
@@ -204,7 +203,7 @@ vector<vector<int>> graphs::Graph::findIsomorphisms() const
 // Thus, the search for canonical label is much slower than in nauty alghorithm.
 // In this case we keep only one branch of tree in memory. 
 // Therefore, the need for two iterators in the TreeNode class.
-vector<int> graphs::Graph::next_permutation(std::stack<std::shared_ptr<TreeNode>>& tree)const
+vector<int> graphs::PrimitiveGraph::next_permutation(std::stack<std::shared_ptr<TreeNode>>& tree)const
 {
 	vector<int> permutation;
 	while (!tree.empty()) {
@@ -277,7 +276,7 @@ vector<int> graphs::Graph::next_permutation(std::stack<std::shared_ptr<TreeNode>
 }
 
 // Prints an adjacency matrix
-void graphs::Graph::printAdjacencyMatrix() const
+void graphs::PrimitiveGraph::printAdjacencyMatrix() const
 {
 	for (int i = 0; i < getVertices(); i++) {
 		for (int j = 0; j < getVertices(); j++) {
@@ -291,7 +290,7 @@ void graphs::Graph::printAdjacencyMatrix() const
 // Splits the partition according the colouring_wrk
 // colouring_out equals to \alpha in McKay algh
 // colouring_wkr equals to \pi
-bool graphs::Graph::refineColouring(partition& colouring_out, partition& colouring_wrk) const
+bool graphs::PrimitiveGraph::refineColouring(partition& colouring_out, partition& colouring_wrk) const
 {
 	//std::cout << "\nNew refinement\n";
 	//printSet(colouring_out, "Partition START");
@@ -386,6 +385,6 @@ bool graphs::Graph::refineColouring(partition& colouring_out, partition& colouri
 }
 
 
-graphs::Graph::~Graph()
+graphs::PrimitiveGraph::~PrimitiveGraph()
 {
 }

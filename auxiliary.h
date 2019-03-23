@@ -65,25 +65,35 @@ namespace graphs
 		std::vector<std::shared_ptr<TreeNode>>m_child;
 	};
 
-	class Graph
+	class PrimitiveGraph
 	{
 	public:
-		Graph() = delete;
-		Graph(int n_nodes) :m_adjacent_list(n_nodes), m_adjacency_matrix(n_nodes, std::vector<int>(n_nodes)), m_canonical_label(n_nodes) {};
-		Graph(const Graph& g);
-		Graph(const Graph&& g);
+		PrimitiveGraph() = delete;
+		PrimitiveGraph(int n_nodes) :m_adjacent_list(n_nodes), m_adjacency_matrix(n_nodes, std::vector<int>(n_nodes)), m_canonical_label(n_nodes) {};
+		PrimitiveGraph(std::vector<std::vector<int>> adjacency_matrix) :m_adjacency_matrix(adjacency_matrix) {
+			for (int i = 0; i < adjacency_matrix.size(); i++) {
+				for (int j = 0; j < i; j++) {
+					if (adjacency_matrix[i][j] > 0) {
+						m_adjacent_list[i].insert(j);
+						m_adjacent_list[j].insert(i);
+					}
+				}
+			}
+		}
+		PrimitiveGraph(const PrimitiveGraph& g);
+		PrimitiveGraph(const PrimitiveGraph&& g);
 
 		void insertEdge(int a1, int a2);
 		void createCanonicalLabel();
 		void printAdjacencyMatrix() const;
 
-		bool isIsomoprhic(Graph& rhs);
+		bool isIsomoprhic(PrimitiveGraph& rhs);
 
 		int getVertices() const { return m_adjacent_list.size(); }
 		int getAdjacency(int i, int j) const { return m_adjacency_matrix[i][j]; }
 
 		std::vector<int> m_canonical_label;
-		~Graph();
+		~PrimitiveGraph();
 	private:
 		bool refineColouring(std::vector<std::set<int>>& colouring_out, std::vector<std::set<int>>& colouring_wrk) const;
 
