@@ -1,82 +1,14 @@
 #pragma once
-#include <vector>
-#include "auxiliary.h"
+#include "PrimitiveGraph.h"
 
-
-
-enum lineType {N_ = 0, H_ = 1, P_ = -1};
-class Vertex 
-{
-public:
-	Vertex() :up(0), down(0),t_pos(-1),index(-1) {};
-    Vertex(int top, int bot, int tpos):up(top),down(bot),t_pos(tpos),index(-1){};
-	Vertex(const Vertex& rhs);
-    
-	virtual void setup(int up, int down, int t_pos);
-    virtual void setIndex(int i);
-    
-	void contractUp();
-	void decontractUp();
-	void contractDown();
-	void decontractDown();
-    
-	const int getTimePosition() const;
-	const int getUpLines() const;
-	const int getDownLines() const;
-    const int getIndex() const;
-	bool operator<(const Vertex & rhs) const;	
-    
-protected:
-	int up, down;
-	int t_pos;
-    int index;
-};
-class VertexPool 
-{
-public:
-	VertexPool();
-	VertexPool(std::vector<Vertex>& pool):vertices(pool),vertices_wrk(pool){};
-	VertexPool(const VertexPool& pool);
-	VertexPool& operator= (const VertexPool& pool);        
-	VertexPool& getPointer(){return *this;};
-	~VertexPool();
-    
-	void addVertex(const Vertex& v);
-    void reset();
-    
-	virtual Vertex& getVertex(int pos){return vertices_wrk[pos];};
-	virtual void getTimedEquivalentVertices(std::vector<std::vector<int>>& equivalent_vertices, const int t_pos, const int up_lines, const int down_lines)const;
-    
-	const std::vector<Vertex>::iterator begin() { return vertices.begin(); }
-	const std::vector<Vertex>::iterator end() { return vertices.end(); }
-    
-	const int countVertices()const {return vertices_wrk.size();};
-	int allConnected();
-    int t_last, up_max, down_max;
-protected:
-	std::vector<Vertex> vertices;
-	std::vector<Vertex> vertices_wrk;
-};
-class Edge
-{
-public:
-	Edge() :L(0), R(0) { line = N_; };
-	Edge(int L, int R);
-	Edge(const Edge& rhs);
-	const int getFirst() const {return L;};
-	const int getSecond() const {return R;};
-	lineType getLineType() const {return line;};
-	const bool operator<(const Edge &rhs) const;
-	const bool operator==(const Edge &rhs) const;
-	const void assignLineType(lineType l) { line = l; };
-	~Edge();
-private:
-	int L, R;
-	lineType line;
-};
 class Operator : public Vertex
 {
 public:
+	Operator() :Vertex() {};
+	Operator(int top, int bot, int tpos) :Vertex(top,bot,tpos) {
+		erank = 0;
+	}
+
 	void setup(int erank, int t_pos, char c);
 private:
 	int erank;
@@ -143,6 +75,7 @@ public:
 	HugenholtzDiagram(const std::shared_ptr<VertexPool>& vertices,const std::vector<Edge>& edges);
 	HugenholtzDiagram(const HugenholtzDiagram & rhs);
 	HugenholtzDiagram(const Diagram& HugenholtzDiagram);
+	void getAlgebraicForm();
 	bool isEqual(const std::vector<Edge>& tmp) const override ;
 
 private:

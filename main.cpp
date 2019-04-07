@@ -4,6 +4,7 @@
 #include <stack>
 #include "test.h"
 #include "hugenholtz.h"
+#include "auxiliary.h"
 /*
 class parent
 {
@@ -49,7 +50,7 @@ std::vector<std::unique_ptr<parent>> parent::mitosis() {
 }*/
 using std::cout;
 using std::endl;
-struct myStack{
+/*struct myStack{
     std::vector<std::vector<int>>stack;
     std::vector<std::vector<int>> final_set;
     int idx;
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
 	sets.push_back(set1);
 	sets.push_back(set2);
 	std::vector<int> final_set;
-	recur(sets, final_set, 0);
+	//recur(sets, final_set, 0);
 	/*
 	do
 	{
@@ -155,13 +156,13 @@ int main(int argc, char **argv)
     v1.setup(2,0,0);
     Vertex v2;
     v2.setup(0,3,1);
-    Vertex v3;
+    Operator v3;
     v3.setup(0,2,2);
     Vertex v4(0,4,3);
     std::shared_ptr<VertexPool> vertices(std::make_shared<VertexPool>());
 	
 	vertices->addVertex(Vertex(2,0,0));
-	vertices->addVertex(Vertex(2,0,0));
+	vertices->addVertex(Operator(2,0,0));
     vertices->addVertex(Vertex(1,3,1));
 	vertices->addVertex(Vertex(0,2,2));
 /*
